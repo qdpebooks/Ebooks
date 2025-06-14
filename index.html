@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 琴韻悠揚 夢起航</title>
+    <!-- jQuery 與 turn.js -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/turn.js/3/turn.js"></script>
+    <style>
+        :root {
+            --book-width: min(90vw, 1400px);
+            --book-height: calc(var(--book-width) / 1.6);
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            background: #2c3e50;
+            background-image: url("../2025/pic/bottom1.jpg");
+            background-size: cover;
+            position: relative;
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            min-width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        .book-container {
+            width: var(--book-width);
+            height: var(--book-height);
+            max-width: 1400px;
+            max-height: 800px;
+            margin: auto;
+            position: relative;
+            background: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .book-spine {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+            width: 0%;
+            height: 100%;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 0 12px 2px rgba(0,0,0,0.08);
+            z-index: 5;
+            pointer-events: none;
+        }
+        #flipbook {
+            width: 100%;
+            height: 100%;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            /*background: rgba(255,255,225,0.5);*/
+            position: relative;
+            border-radius: 18px; /* 新增：四邊圓角 */
+            overflow: hidden;    /* 新增：內容不超出圓角 */
+        }
+        /* 硬皮封面與封底效果 */
+        #flipbook .hardcover, #flipbook .hardcover-back {
+            background: linear-gradient(135deg, #e8e8e8 60%, #fefefe 100%);
+            border: 6px solid #888;
+            box-shadow:
+                0 0 20px #bbb,
+                0 0 0 12px #e8e8e8 inset,
+                8px 0 24px -8px #bbb;
+            position: relative;
+            z-index: 10;
+        }
+        #flipbook .hardcover img, #flipbook .hardcover-back img {
+            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            display: block;
+            border-radius: 4px;
+        }
+        /* 書本厚度效果（左側陰影） */
+        #flipbook::before,
+        #flipbook::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.7;
+            display: block;
+            transition: width 0.3s;
+        }
+        #flipbook::before {
+            left: 0;
+            background:
+                repeating-linear-gradient(
+                    to right,
+                    #e8e8e8 0px, #e8e8e8 2px,
+                    #fff 2px, #fff 4px
+                );
+            border-radius: 12px 0 0 12px;
+            width: 0px; /* 由JS動態調整 */
+            z-index: 2;
+        }
+        #flipbook::after {
+            right: 0;
+            background:
+                repeating-linear-gradient(
+                    to left,
+                    #e8e8e8 0px, #e8e8e8 2px,
+                    #fff 2px, #fff 4px
+                );
+            border-radius: 0 12px 12px 0;
+            width: 0px; /* 由JS動態調整 */
+            z-index: 2;
+        }
+        /* 內頁紙張效果 */
+        #flipbook .page {
+            background: linear-gradient(90deg, #fff 80%, #f3f3f3 100%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            position: relative;
+            border-radius: 2px;
+        }
+        #flipbook .page img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            background: rgba(255,255,225,0.5);
+            transition: opacity 0.3s;
+            border-radius: 2px;
+        }
+        /* turn.js 頁面厚度陰影 */
+        #flipbook .turn-page {
+            box-shadow: 0 0 8px 2px #bbb;
+        }
+        /* 雙頁之間的距離為1px */
+        #flipbook .page,
+        #flipbook .hardcover,
+        #flipbook .hardcover-back {
+            margin-right: 0;
+            margin-left: 0;
+        }
+        .turn-view {
+            gap: 1px !important;
+        }
+        @media (max-width: 700px) {
+            :root {
+                --book-width: 98vw;
+            }
+        }
+        .logo-float {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+        }
+        .logo-float img {
+            max-width: 420px;
+            width: 90%;
+            height: auto;
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <!-- 懸浮LOGO在書本正上方，離上方10px -->
+    <div class="logo-float">
+        <img src="../2025/pic/logotitle.svg" alt="Logo">
+    </div>
+    <div class="book-container">
+        <div class="book-spine"></div>
+        <div id="flipbook">
+            <!-- 封面 -->
+            <div class="hardcover">
+                <img src="../2025/pic/book (1).jpg" alt="書本封面">
+            </div>
+            <!-- 內頁 -->
+            <div class="page"><img src="../2025/pic/book (2).jpg" alt="第1頁"></div>
+            <div class="page"><img src="../2025/pic/book (3).jpg" alt="第2頁"></div>
+            <div class="page"><img src="../2025/pic/book (4).jpg" alt="第3頁"></div>
+            <div class="page"><img src="../2025/pic/book (5).jpg" alt="第4頁"></div>
+            <div class="page"><img src="../2025/pic/book (6).jpg" alt="第5頁"></div>
+            <div class="page"><img src="../2025/pic/book (7).jpg" alt="第6頁"></div>
+            <div class="page"><img src="../2025/pic/book (8).jpg" alt="第7頁"></div>
+            <div class="page"><img src="../2025/pic/book (9).jpg" alt="第8頁"></div>
+            <div class="page"><img src="../2025/pic/book (10).jpg" alt="第9頁"></div>
+            <div class="page"><img src="../2025/pic/book (11).jpg" alt="第10頁"></div>
+            <div class="page"><img src="../2025/pic/book (12).jpg" alt="第11頁"></div>
+            <div class="page"><img src="../2025/pic/book (13).jpg" alt="第12頁"></div>
+            <div class="page"><img src="../2025/pic/book (14).jpg" alt="第13頁"></div>
+            <div class="page"><img src="../2025/pic/book (15).jpg" alt="第14頁"></div>
+            <div class="page"><img src="../2025/pic/book (16).jpg" alt="第15頁"></div>
+            <div class="page"><img src="../2025/pic/book (17).jpg" alt="第16頁"></div>
+            <div class="page"><img src="../2025/pic/book (18).jpg" alt="第17頁"></div>
+            <div class="page"><img src="../2025/pic/book (19).jpg" alt="第18頁"></div>
+            <div class="page"><img src="../2025/pic/book (20).jpg" alt="第19頁"></div>
+            <div class="page"><img src="../2025/pic/book (21).jpg" alt="第20頁"></div>
+            <div class="page"><img src="../2025/pic/book (22).jpg" alt="第21頁"></div>
+            <div class="page"><img src="../2025/pic/book (23).jpg" alt="第22頁"></div>
+            <div class="page"><img src="../2025/pic/book (24).jpg" alt="第23頁"></div>
+            <div class="page"><img src="../2025/pic/book (25).jpg" alt="第24頁"></div>
+            <div class="page"><img src="../2025/pic/book (26).jpg" alt="第25頁"></div>
+            <div class="page"><img src="../2025/pic/book (27).jpg" alt="第26頁"></div>
+            <div class="page"><img src="../2025/pic/book (28).jpg" alt="第27頁"></div>
+            <div class="page"><img src="../2025/pic/book (29).jpg" alt="第28頁"></div>
+            <div class="page"><img src="../2025/pic/book (30).jpg" alt="第29頁"></div>
+            <div class="page"><img src="../2025/pic/book (31).jpg" alt="第30頁"></div>
+            <div class="page"><img src="../2025/pic/book (32).jpg" alt="第31頁"></div>
+            <div class="page"><img src="../2025/pic/book (33).jpg" alt="第32頁"></div>
+            <div class="page"><img src="../2025/pic/book (34).jpg" alt="第33頁"></div>
+            <div class="page"><img src="../2025/pic/book (35).jpg" alt="第34頁"></div>
+            <div class="page"><img src="../2025/pic/book (36).jpg" alt="第35頁"></div>
+            <div class="page"><img src="../2025/pic/book (37).jpg" alt="第36頁"></div>
+            <div class="page"><img src="../2025/pic/book (38).jpg" alt="第37頁"></div>
+            <div class="page"><img src="../2025/pic/book (39).jpg" alt="第38頁"></div>
+            <div class="page"><img src="../2025/pic/book (40).jpg" alt="第39頁"></div>
+            <div class="page"><img src="../2025/pic/book (41).jpg" alt="第40頁"></div>
+            <div class="page"><img src="../2025/pic/book (42).jpg" alt="第41頁"></div>
+            <div class="page"><img src="../2025/pic/book (43).jpg" alt="第42頁"></div>
+            <!-- 封底 -->
+            <div class="hardcover-back">
+                <img src="../2025/pic/book (44).jpg" alt="書本封底">
+            </div>
+        </div>
+    </div>
+    <script>
+        // 預載入所有圖片，避免閃爍
+        function preloadImages(selector, callback) {
+            var $imgs = $(selector), loaded = 0;
+            if ($imgs.length === 0) return callback();
+            $imgs.each(function () {
+                if (this.complete) {
+                    loaded++;
+                    if (loaded === $imgs.length) callback();
+                } else {
+                    $(this).on('load error', function () {
+                        loaded++;
+                        if (loaded === $imgs.length) callback();
+                    });
+                }
+            });
+        }
+        function resizeBook() {
+            var w = Math.min(window.innerWidth * 0.9, 1200);
+            var h = w / 1.6;
+            $('.book-container').css({width: w + 'px', height: h + 'px'});
+            $('#flipbook').turn('size', w, h);
+        }
+        function setBookThickness(page, total) {
+            // 只針對 22 張紙張（44頁，含封面封底），其餘不顯示厚度
+            // page: 1=封面, 2=第一頁, ..., total=封底
+            const maxSheets = 22;
+            // 內頁總數（不含封面封底）
+            const innerPages = total - 2;
+            // 已翻頁數（左厚度）：Math.floor((page-1)/2)
+            let leftSheets = 0, rightSheets = 0;
+            if (page <= 1) {
+                leftSheets = 0;
+                rightSheets = maxSheets;
+            } else if (page >= total) {
+                leftSheets = maxSheets;
+                rightSheets = 0;
+            } else {
+                leftSheets = Math.floor((page - 1) / innerPages * maxSheets);
+                rightSheets = maxSheets - leftSheets;
+            }
+            // 最大厚度寬度(px)
+            const maxThickness = 18;
+            // 計算厚度
+            const leftWidth = Math.round(maxThickness * (leftSheets / maxSheets));
+            const rightWidth = Math.round(maxThickness * (rightSheets / maxSheets));
+            // 設定厚度
+            $('#flipbook').css('--left-thickness', leftWidth + 'px');
+            $('#flipbook').css('--right-thickness', rightWidth + 'px');
+            $('#flipbook').get(0).style.setProperty('--left-thickness', leftWidth + 'px');
+            $('#flipbook').get(0).style.setProperty('--right-thickness', rightWidth + 'px');
+            $('#flipbook').find('::before').width(leftWidth + 'px');
+            $('#flipbook').find('::after').width(rightWidth + 'px');
+            // 直接操作 DOM
+            document.querySelector('#flipbook').style.setProperty('--left-thickness', leftWidth + 'px');
+            document.querySelector('#flipbook').style.setProperty('--right-thickness', rightWidth + 'px');
+            // 直接設寬度
+            document.querySelector('#flipbook').style.setProperty('--left-thickness', leftWidth + 'px');
+            document.querySelector('#flipbook').style.setProperty('--right-thickness', rightWidth + 'px');
+        }
+        $(function () {
+            preloadImages('#flipbook img', function () {
+                $('#flipbook').turn({
+                    width: $('.book-container').width(),
+                    height: $('.book-container').height(),
+                    autoCenter: true,
+                    elevation: 100,
+                    gradients: true,
+                    duration: 1200,
+                    display: 'double',
+                    acceleration: true,
+                    when: {
+                        turning: function (event, page, view) {
+                            setBookThickness(page, $('#flipbook').turn('pages'));
+                        },
+                        turned: function (event, page, view) {
+                            setBookThickness(page, $('#flipbook').turn('pages'));
+                        }
+                    }
+                });
+                resizeBook();
+                $(window).on('resize', function () {
+                    resizeBook();
+                });
+
+                // 初始設定
+                setBookThickness(1, $('#flipbook').turn('pages'));
+
+                // 自動翻頁效果（封面與封底2秒，其他頁9秒）
+                function autoFlip() {
+                    var total = $('#flipbook').turn('pages');
+                    var current = $('#flipbook').turn('page');
+                    var delay;
+                    if (current === 0 || current === total) {
+                        delay = 2000; // 封面或封底2秒
+                    } else {
+                        delay = 9000; // 其他頁9秒
+                    }
+                    if (current < total) {
+                        $('#flipbook').turn('next');
+                        setTimeout(autoFlip, delay);
+                    } else {
+                        // 到最後一頁時，2秒後直接跳回封面（第1頁），再繼續自動翻頁
+                        setTimeout(function () {
+                            $('#flipbook').turn('page', 1);
+                            setTimeout(autoFlip, 2000);
+                        }, 2000);
+                    }
+                }
+                setTimeout(autoFlip, 2000); // 首頁2秒後開始
+            });
+        });
+    </script>
+</body>
+</html>
